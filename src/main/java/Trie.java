@@ -61,4 +61,9 @@ public class Trie implements ITrie {
       isEndOfWord = false;
     }
   }
+
+  @Override
+  public String getTitle() {
+    return "Trie";
+  }
 }

@@ -1,10 +1,12 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.stream.Collectors;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
@@ -31,26 +33,72 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
   private static final int NUM_WORDS = 100000;
   private static final int WORD_LENGTH = 10;
 
-  public TriePerformanceAnalyser(String title,ITrie trie) {
+  public TriePerformanceAnalyser(String title) {
     super(title);
-    JFreeChart barChart = ChartFactory.createBarChart(
-        "Trie Performance Analysis",
-        "Operation",
+  }
+
+  public void createCharts(ITrie... tries){
+    final String INSERT = "Insertion";
+    final String SEARCH = "Searching";
+    final String DELETE = "Deletion";
+    final String SPACE = "Memory Usage";
+
+    int n = 40000;
+
+    final DefaultCategoryDataset datasetTime = new DefaultCategoryDataset();
+    JFreeChart barChartTime = ChartFactory.createBarChart(
+        "Trie Operation Time, n = "+n ,
+        "Trie variation",
         "Time (nanoseconds)",
-        createDataset(),
+        datasetTime,
         PlotOrientation.VERTICAL,
         true, true, false);
-    CategoryPlot plot = barChart.getCategoryPlot();
-    BarRenderer renderer = (BarRenderer) plot.getRenderer();
-    renderer.setSeriesPaint(0, new Color(200,80,80));
-    renderer.setSeriesPaint(1, new Color(80,200,80));
-    renderer.setSeriesPaint(2, new Color(80,80,200));
-    renderer.setDrawBarOutline(false);
-    renderer.setShadowVisible(false); // Remove shadows
-    renderer.setBarPainter(new StandardBarPainter());
-    ChartPanel chartPanel = new ChartPanel(barChart);
-    chartPanel.setPreferredSize(new Dimension(800, 600));
-    setContentPane(chartPanel);
+
+    final DefaultCategoryDataset datasetSpace = new DefaultCategoryDataset();
+    JFreeChart barChartSpace = ChartFactory.createBarChart(
+        "Trie Memory Usage, n = "+n,
+        "Trie variation",
+        "Memory Usage (Bytes)",
+        datasetSpace,
+        PlotOrientation.VERTICAL,
+        true, true, false);
+
+    CategoryPlot plot = barChartTime.getCategoryPlot();
+    BarRenderer rendererTime = (BarRenderer) plot.getRenderer();
+    plot = barChartSpace.getCategoryPlot();
+    BarRenderer rendererSpace = (BarRenderer) plot.getRenderer();
+
+    for (ITrie trie: tries) {
+
+      PerformanceData data = createDataset(n, trie);
+      datasetTime.addValue(data.avg_insertion_time, INSERT, trie.getTitle());
+      rendererTime.setSeriesPaint(0, new Color(220,90,90));
+      datasetTime.addValue(data.avg_searching_time, SEARCH, trie.getTitle());
+      rendererTime.setSeriesPaint(1, new Color(90,220,90));
+      datasetTime.addValue(data.avg_deletion_time, DELETE, trie.getTitle());
+      rendererTime.setSeriesPaint(2, new Color(90,90,220));
+
+      datasetSpace.addValue(data.memory_usage, SPACE, trie.getTitle());
+      rendererSpace.setSeriesPaint(0, new Color(220,100,100));
+    }
+
+    rendererTime.setDrawBarOutline(false);
+    rendererTime.setShadowVisible(false); // Remove shadows
+    rendererTime.setBarPainter(new StandardBarPainter());
+    rendererSpace.setItemMargin(0.00);
+    rendererTime.setMaximumBarWidth(0.05);
+    rendererTime.setItemMargin(0.0);
+
+    rendererSpace.setDrawBarOutline(false);
+    rendererSpace.setShadowVisible(false); // Remove shadows
+    rendererSpace.setBarPainter(new StandardBarPainter());
+    rendererSpace.setItemMargin(0.0);
+    rendererSpace.setMaximumBarWidth(0.05);
+    rendererSpace.setItemMargin(0.0);
+
+    saveChartAsImage(barChartTime, n+"-Time.png");
+    saveChartAsImage(barChartSpace, n+"-Space.png");
+
   }
 
   // Force the system to execute GC to recycle temporary memory usage
@@ -65,40 +113,36 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
     }
   }
 
-  private CategoryDataset createDataset() {
-    final String INSERT = "Insert";
-    final String SEARCH = "Search";
-    final String SPACE = "Memory Usage";
-    ITrie trie = new Trie();
-    ITrie mockTrie = new MockTrie();
-    int n = 1000;
+  private PerformanceData createDataset(int n, ITrie trie) {
+    PerformanceData data = new PerformanceData();
 
-    final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
     List<String> wordsInsert = LoadFromFile("src/main/resources/wordlist.txt",n );
     List<String> wordsSearch = LoadFromFile("src/main/resources/wordlist.txt",n);
-
-
-
+    List<String> wordsDelete = new ArrayList<>(wordsInsert);
+    Collections.shuffle(wordsDelete);
+    wordsDelete.subList(0,n/10);
     try (PerformanceMonitor monitor = new PerformanceMonitor()) {
       for (String word : wordsInsert) {
         trie.insert(word);
       }
-      dataset.addValue(monitor.getRunningTime(), INSERT, INSERT);
-
+      data.avg_insertion_time = (float)monitor.getRunningTime()/n;
+      data.memory_usage = monitor.getMemoryUsage();
+      monitor.reset();
       for (String word : wordsSearch) {
         trie.search(word);
       }
-      dataset.addValue(monitor.getRunningTime(), SEARCH, SEARCH);
-      dataset.addValue(monitor.getMemoryUsage(), SPACE, SPACE);
+      data.avg_searching_time = (float)monitor.getRunningTime()/n;
+      for (String word : wordsDelete) {
+        trie.remove(word);
+      }
+      data.avg_deletion_time = (float)monitor.getRunningTime()/n;
     } catch (Exception e) {
       System.err.println("An exception is thrown during the performance testing");
       System.err.println(e.getMessage());
     }
 
-
-
-    return dataset;
+    return data;
   }
 
   private List<String> generateRandomWords(int numWords, int wordLength) {
@@ -133,17 +177,19 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
     return words.subList(0,wordCount);
   }
 
+  private void saveChartAsImage(JFreeChart chart, String dst){
+    try {
+      File imageFile = new File(dst);
+      ChartUtils.saveChartAsPNG(imageFile, chart, 800, 600);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   public static void main(String[] args) {
-    TriePerformanceAnalyser chart = new TriePerformanceAnalyser("Trie Performance Analysis", new MockTrie());
-    chart.pack();
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    int width = chart.getWidth();
-    int height = chart.getHeight();
-    int x = (screenSize.width - width) / 2;
-    int y = (screenSize.height - height) / 2;
-    chart.setLocation(x, y);
-    chart.setVisible(true);
-    chart.setVisible(true);
+    TriePerformanceAnalyser chart = new TriePerformanceAnalyser("Trie Performance Analysis");
+    chart.createCharts(new Trie(), new MockTrie());
+
   }
 
   public class PerformanceMonitor implements AutoCloseable{
@@ -153,6 +199,9 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
       forceGarbageCollection();
       startTime = System.nanoTime();
       startMemoryUsage = getTotalMemoryUsage();
+    }
+    public void reset(){
+      startTime = System.nanoTime();
     }
 
     private long getTotalMemoryUsage(){
