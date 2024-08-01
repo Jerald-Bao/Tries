@@ -117,8 +117,8 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
     PerformanceData data = new PerformanceData();
 
 
-    List<String> wordsInsert = LoadFromFile("src/main/resources/wordlist.txt",n );
-    List<String> wordsSearch = LoadFromFile("src/main/resources/wordlist.txt",n);
+    List<String> wordsInsert = wordListUtil.LoadFromFile("src/main/resources/wordlist.txt",n );
+    List<String> wordsSearch = wordListUtil.LoadFromFile("src/main/resources/wordlist.txt",n);
     List<String> wordsDelete = new ArrayList<>(wordsInsert);
     Collections.shuffle(wordsDelete);
     wordsDelete.subList(0,n/10);
@@ -139,43 +139,15 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
       data.avg_deletion_time = (float)monitor.getRunningTime()/n;
     } catch (Exception e) {
       System.err.println("An exception is thrown during the performance testing");
-      System.err.println(e.getMessage());
+      e.printStackTrace();
     }
 
     return data;
   }
 
-  private List<String> generateRandomWords(int numWords, int wordLength) {
-    List<String> words = new ArrayList<>();
-    Random random = new Random();
-    for (int i = 0; i < numWords; i++) {
-      StringBuilder sb = new StringBuilder(wordLength);
-      for (int j = 0; j < wordLength; j++) {
-        sb.append((char) ('a' + random.nextInt(26)));
-      }
-      words.add(sb.toString());
-    }
-    return words;
-  }
 
-  private List<String> LoadFromFile(String fileName, int wordCount) {
-    List<String> words = new ArrayList<>();
 
-    // Read all words from the file
-    try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-      String word;
-      while ((word = br.readLine()) != null) {
-        words.add(word.toLowerCase()); // Convert to lowercase to ensure consistency
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
 
-    // Shuffle the list to randomize the order
-    Collections.shuffle(words);
-
-    return words.subList(0,wordCount);
-  }
 
   private void saveChartAsImage(JFreeChart chart, String dst){
     try {
@@ -188,7 +160,7 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
 
   public static void main(String[] args) {
     TriePerformanceAnalyser chart = new TriePerformanceAnalyser("Trie Performance Analysis");
-    chart.createCharts(new Trie(), new MockTrie());
+    chart.createCharts(new Trie(), new MockTrie(), new PatriciaTrie());
 
   }
 

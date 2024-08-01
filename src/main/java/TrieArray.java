@@ -94,6 +94,11 @@ public class TrieArray implements ITrie{
     return true;
   }
 
+  @Override
+  public String getTitle() {
+    return "Trie (Array)";
+  }
+
   private void delete(String word) {
 
     TrieNode cur = root;
