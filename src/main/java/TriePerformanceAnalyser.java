@@ -117,8 +117,8 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
     PerformanceData data = new PerformanceData();
 
 
-    List<String> wordsInsert = wordListUtil.LoadFromFile("src/main/resources/wordlist.txt",n );
-    List<String> wordsSearch = wordListUtil.LoadFromFile("src/main/resources/wordlist.txt",n);
+    List<String> wordsInsert = wordListUtil.LoadFromFile("src/main/resources/cleaned_wordlist.txt",n );
+    List<String> wordsSearch = wordListUtil.LoadFromFile("src/main/resources/cleaned_wordlist.txt",n);
     List<String> wordsDelete = new ArrayList<>(wordsInsert);
     Collections.shuffle(wordsDelete);
     wordsDelete.subList(0,n/10);
