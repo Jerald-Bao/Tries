@@ -89,15 +89,24 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
   }
 
   public static void main(String[] args) {
-    TriePerformanceAnalyser chart = new TriePerformanceAnalyser("Trie Performance Analysis", new MockTrie());
-    chart.pack();
+    TriePerformanceAnalyser chart1 = new TriePerformanceAnalyser("RadixTree Performance Analysis", new RadixTree());
+    TriePerformanceAnalyser chart2 = new TriePerformanceAnalyser("MockTrie Performance Analysis", new MockTrie());
+
+    chart1.pack();
+    chart2.pack();
+
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    int width = chart.getWidth();
-    int height = chart.getHeight();
+    int width = chart1.getWidth();
+    int height = chart1.getHeight();
     int x = (screenSize.width - width) / 2;
     int y = (screenSize.height - height) / 2;
-    chart.setLocation(x, y);
-    chart.setVisible(true);
-    chart.setVisible(true);
+
+    chart1.setLocation(x, y);
+    chart2.setLocation(x, y + height); // Position the second chart below the first one
+
+    chart1.setVisible(true);
+    chart2.setVisible(true);
   }
+
+
 }
