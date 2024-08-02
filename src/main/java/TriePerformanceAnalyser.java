@@ -43,13 +43,13 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
     final String DELETE = "Deletion";
     final String SPACE = "Memory Usage";
 
-    int n = 40000;
+    int n = 300000;
 
     final DefaultCategoryDataset datasetTime = new DefaultCategoryDataset();
     JFreeChart barChartTime = ChartFactory.createBarChart(
         "Trie Operation Time, n = "+n ,
         "Trie variation",
-        "Time (nanoseconds)",
+        "Average Time per operation (nanoseconds)",
         datasetTime,
         PlotOrientation.VERTICAL,
         true, true, false);
@@ -107,7 +107,7 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
 
     // Give some time for GC to run
     try {
-      Thread.sleep(1000);
+      Thread.sleep(2000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
@@ -117,9 +117,14 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
     PerformanceData data = new PerformanceData();
 
 
-    List<String> wordsInsert = wordListUtil.LoadFromFile("src/main/resources/cleaned_wordlist.txt",n );
-    List<String> wordsSearch = wordListUtil.LoadFromFile("src/main/resources/cleaned_wordlist.txt",n);
+//    List<String> wordsInsert = wordListUtil.LoadFromFile("src/main/resources/cleaned_wordlist.txt",n );
+//    List<String> wordsSearch = wordListUtil.LoadFromFile("src/main/resources/cleaned_wordlist.txt",n);
+//    List<String> wordsDelete = new ArrayList<>(wordsInsert);
+
+    List<String> wordsInsert = wordListUtil.generateRandomWords(n,20);
+    List<String> wordsSearch = wordListUtil.generateRandomWords(n,20);
     List<String> wordsDelete = new ArrayList<>(wordsInsert);
+
     Collections.shuffle(wordsDelete);
     wordsDelete.subList(0,n/10);
     try (PerformanceMonitor monitor = new PerformanceMonitor()) {
@@ -161,7 +166,7 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
 
   public static void main(String[] args) {
     TriePerformanceAnalyser chart = new TriePerformanceAnalyser("Trie Performance Analysis");
-    chart.createCharts(new Trie(), new MockTrie(), new PatriciaTrie(), new BitmapIndexingTrie(), new TrieArray(), new TrieHashMap());
+    chart.createCharts(new TrieHashMap(), new TrieArray(), new PatriciaTrie(), new BitmapIndexingTrie(), new RadixTree());
   }
 
   public class PerformanceMonitor implements AutoCloseable{
