@@ -161,7 +161,7 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
 
   public static void main(String[] args) {
     TriePerformanceAnalyser chart = new TriePerformanceAnalyser("Trie Performance Analysis");
-    chart.createCharts(new Trie(), new MockTrie(), new PatriciaTrie(), new BitmapIndexingTrie());
+    chart.createCharts(new Trie(), new MockTrie(), new PatriciaTrie(), new BitmapIndexingTrie(), new TrieArray(), new TrieHashMap());
   }
 
   public class PerformanceMonitor implements AutoCloseable{

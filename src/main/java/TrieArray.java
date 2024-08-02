@@ -1,4 +1,4 @@
-public class TrieArray implements ITrie{
+public class TrieArray implements ITrie {
 
   // define a TrieNode
   private class TrieNode {
@@ -27,9 +27,12 @@ public class TrieArray implements ITrie{
   public void insert(String word) {
     TrieNode cur = root;
 
-    for (int i = 0; i < word.length(); i++){
-
-      int index = word.charAt(i) - 'a';
+    for (int i = 0; i < word.length(); i++) {
+      char c = word.charAt(i);
+      if (c < 'a' || c > 'z') {
+        throw new IllegalArgumentException("Word contains invalid characters");
+      }
+      int index = c - 'a';
       if (cur.children[index] == null) {
         cur.children[index] = new TrieNode();
       }
@@ -126,4 +129,8 @@ public class TrieArray implements ITrie{
     return true;
   }
 
+  @Override
+  public String getTitle() {
+    return "TrieArray Implementation";
+  }
 }
