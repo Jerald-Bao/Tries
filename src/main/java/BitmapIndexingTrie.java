@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class BitmapIndexingTrie implements ITrie {
 
-  class TrieNode {
+  static class TrieNode {
     ArrayList<TrieNode> children;
     boolean isWord;
     Long bitmap;
