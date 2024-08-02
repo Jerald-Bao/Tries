@@ -74,18 +74,16 @@ public class TrieArray implements ITrie{
       return false;
     }
 
+    // make a pointer pointing to the word end
     TrieNode cur = root;
 
     for (int i = 0; i < word.length(); i++) {
       int index = word.charAt(i) - 'a';
-      if (cur.children[index] == null) {
-        return false;
-      }
       cur = cur.children[index];
     }
 
-    // if cur is part of a longer word, then mark it as not the end of the word
-    if (cur.children.length != 0) {
+    // if cur(word end node) is part of a longer word, then mark it as not the end of the word
+    if (!isChildrenEmpty(cur.children)) {
       cur.isEndOfWord = false;
     } // if cur is the leaf node, then recursively delete nodes which are not end of word and have no children
     else {
@@ -94,13 +92,7 @@ public class TrieArray implements ITrie{
     return true;
   }
 
-  @Override
-  public String getTitle() {
-    return "Trie (Array)";
-  }
-
   private void delete(String word) {
-
     TrieNode cur = root;
 
     // recursively delete nodes which are not end of word and have no children
@@ -110,19 +102,28 @@ public class TrieArray implements ITrie{
   private void deleteHelper(TrieNode cur, String word, int i) {
 
     // base case
-    if (i == word.length()) {
-      cur = null;
+    if (i == word.length() - 1) {
+      cur.children[word.charAt(i) - 'a'] = null;
       return;
     }
 
     // recursive case
     int index = word.charAt(i) - 'a';
     deleteHelper(cur.children[index], word, i + 1);
-    if (cur.children.length != 0 || cur.isEndOfWord) {
+    if (!isChildrenEmpty(cur.children) || cur.children[index].isEndOfWord) {
       return;
     }
     cur.children[index] = null;
     return;
+  }
+
+  private boolean isChildrenEmpty(TrieNode[] children) {
+    for (TrieNode child : children) {
+        if (child != null) {
+            return false;
+        }
+    }
+    return true;
   }
 
 }
