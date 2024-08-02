@@ -46,14 +46,18 @@ public class PatriciaTrie implements ITrie {
       if (remainingBits < node.skipNum  && matchResult == -1) {
         long[] commonPrefix = subFirstNBits(node.bitArray,remainingBits);
         leftShift(node.bitArray, remainingBits);
+        leftShift(remainingBitArray, remainingBits);
+
         node.bitArray = trimTail(node.bitArray,node.skipNum - remainingBits);
-        boolean newEdge = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
+        boolean newEdge = (node.bitArray[0] & (0x1L << 63)) != 0x0L;
         leftShift(node.bitArray, 1);
         if (!newEdge) {
           node.left = new TrieNode(node.bitArray,node.skipNum - remainingBits-1,node.left,node.right);
+          node.left.isWord = node.isWord;
         }
         else {
           node.right = new TrieNode(node.bitArray,node.skipNum - remainingBits-1,node.left,node.right);
+          node.right.isWord = node.isWord;
         }
         node.bitArray = commonPrefix;
         node.skipNum = remainingBits;
@@ -115,10 +119,9 @@ public class PatriciaTrie implements ITrie {
         node.right.isWord = true;
       }
 
-
-
       node.bitArray = commonPrefix;
       node.skipNum = matchResult;
+      node.isWord = false;
       return;
     }
 
@@ -349,7 +352,7 @@ public class PatriciaTrie implements ITrie {
       remainingBits--;
       boolean res = remove(nextNode,remainingBitArray,remainingBits);
       // remove empty nodes
-      if (!nextNode.isWord && nextNode.left == null && nextNode.right == null) {
+      if (nextNode !=null && !nextNode.isWord && nextNode.left == null && nextNode.right == null) {
         if (!newEdge){
           node.left = null;
         } else {

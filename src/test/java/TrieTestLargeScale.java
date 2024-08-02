@@ -19,7 +19,7 @@ public class TrieTestLargeScale {
 
     @Test
     public void testInsertAndSearch() {
-        int n=100;
+        int n=10000;
         List<String> wordsInsert = wordListUtil.LoadFromFile("src/main/resources/wordlist.txt",n );
         List<String> wordsSearchFalse = wordListUtil.generateRandomWords(n,10);
 

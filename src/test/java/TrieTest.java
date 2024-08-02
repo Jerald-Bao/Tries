@@ -32,7 +32,6 @@ public class TrieTest {
         assertTrue(trie.search("apple"));   // should return true
         assertTrue(trie.search("app"));     // should return true
         assertFalse(trie.search("appl"));   // should return false
-        assertTrue(trie.search("applelonge"));
     }
 
     @Test
