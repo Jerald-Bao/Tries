@@ -97,9 +97,11 @@ public class PatriciaTrie implements ITrie {
       node.bitArray = trimTail(node.bitArray,node.skipNum - matchResult);
       if (!newEdgeOldBranch) {
         node.left = new TrieNode(node.bitArray,node.skipNum - matchResult-1,node.left,node.right);
+        node.left.isWord = node.isWord;
       }
       else {
         node.right = new TrieNode(node.bitArray,node.skipNum - matchResult-1,node.left,node.right);
+        node.right.isWord = node.isWord;
       }
 
       boolean newEdgeWord = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
@@ -278,14 +280,43 @@ public class PatriciaTrie implements ITrie {
       }
       else {
         int matchResult = match(node, remainingBitArray,remainingBits);
-        return (matchResult == -1);
+        return (matchResult == -1) && node.isWord;
       }
     }
   }
 
   @Override
   public boolean startsWith(String prefix) {
-    return true;
+    long[] remainingBitArray = compress(prefix.getBytes());
+    int remainingBits = prefix.length() * Byte.SIZE;
+    TrieNode node = root;
+    while (true) {
+      if (node == null)
+        return false;
+      if (remainingBits < node.skipNum){
+        return match(node, remainingBitArray,remainingBits) == -1;
+      }
+      if (remainingBits > node.skipNum) {
+        int matchResult = match(node, remainingBitArray,remainingBits);
+        if (matchResult != -1) {
+          return false;
+        }
+        leftShift(remainingBitArray, node.skipNum);
+        remainingBits -= node.skipNum;
+        boolean newEdge = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
+        if (!newEdge)
+          node = node.left;
+        else
+          node = node.right;
+
+        leftShift(remainingBitArray, 1);
+        remainingBits--;
+      }
+      else {
+        int matchResult = match(node, remainingBitArray,remainingBits);
+        return (matchResult == -1);
+      }
+    }
   }
 
   @Override
