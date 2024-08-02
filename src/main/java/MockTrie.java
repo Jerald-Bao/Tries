@@ -28,4 +28,9 @@ public class MockTrie implements ITrie {
     return false;
   }
 
+  @Override
+  public String getTitle() {
+    return "Mock";
+  }
+
 }

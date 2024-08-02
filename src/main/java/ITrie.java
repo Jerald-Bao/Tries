@@ -8,5 +8,5 @@ public interface ITrie {
   // Check if there is any word in the trie that starts with the given prefix
   boolean startsWith(String prefix);
   boolean remove(String word);
-
+  String getTitle();
 }

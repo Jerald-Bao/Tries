@@ -93,6 +93,11 @@ public class RadixTree implements ITrie{
     return delete(word, root, null, '\0');
   }
 
+  @Override
+  public String getTitle() {
+    return "Radix";
+  }
+
   private boolean delete(String word, Node node, Node parent, char parentKey) {
     // check if the word is the same as the key
     if (word.equals(node.key)) {
