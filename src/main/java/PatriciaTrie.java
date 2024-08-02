@@ -21,8 +21,6 @@ public class PatriciaTrie implements ITrie {
       this.left = left;
       this.right =right;
     }
-
-
   }
 
   private final TrieNode root;
@@ -33,9 +31,11 @@ public class PatriciaTrie implements ITrie {
 
   @Override
   public void insert(String word) {
+    // convert word to bit array.
     long[] remainingBitArray = compress(word.getBytes());
     int remainingBits = word.length() * Byte.SIZE;
     TrieNode node = root;
+    // if the trie is empty:
     if (node.left ==null && node.right == null && node.skipNum == 0) {
       node.skipNum = remainingBits;
       node.bitArray = remainingBitArray;
@@ -43,14 +43,21 @@ public class PatriciaTrie implements ITrie {
     }
     while (true) {
       int matchResult = match(node, remainingBitArray, remainingBits);
+
+      // if the inserted word is part of the current skip prefix, diverge the node
       if (remainingBits < node.skipNum  && matchResult == -1) {
         long[] commonPrefix = subFirstNBits(node.bitArray,remainingBits);
         leftShift(node.bitArray, remainingBits);
         leftShift(remainingBitArray, remainingBits);
 
+        // trim the node bit array to keep the trie as minimal size.
         node.bitArray = trimTail(node.bitArray,node.skipNum - remainingBits);
+
+        // extract the edge-determining bit.
         boolean newEdge = (node.bitArray[0] & (0x1L << 63)) != 0x0L;
         leftShift(node.bitArray, 1);
+
+        // create the branch and attach the original node to the branch
         if (!newEdge) {
           node.left = new TrieNode(node.bitArray,node.skipNum - remainingBits-1,node.left,node.right);
           node.left.isWord = node.isWord;
@@ -65,12 +72,19 @@ public class PatriciaTrie implements ITrie {
         return;
       }
       if (matchResult == -1) {
+
+        // if prefix matches and it isn't the end, we visit the next node.
         if (remainingBits > node.skipNum) {
+
           leftShift(remainingBitArray, node.skipNum);
           remainingBits -= node.skipNum+1;
+
+          // extract the edge-determining bit.
           boolean nextEdge = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
           leftShift(remainingBitArray, 1);
           if (nextEdge) {
+
+            // if there's no node that we suppose to search into, create one as a leaf node.
             if (node.right == null) {
               node.right = new TrieNode(remainingBitArray, remainingBits);
               node.right.isWord = true;
@@ -78,6 +92,8 @@ public class PatriciaTrie implements ITrie {
             }
             node = node.right;
           } else {
+
+            // same as above.
             if (node.left == null) {
               node.left = new TrieNode(remainingBitArray, remainingBits);
               node.left.isWord = true;
@@ -87,18 +103,23 @@ public class PatriciaTrie implements ITrie {
           }
           continue;
         } else {
+
+          // if the skip prefix is exactly the word, mark the prefix node as a word node
           node.isWord = true;
           return;
         }
       }
 
-      // otherwise, branch here
+      // otherwise, then the skip prefix doesn't match the word.
+      // extract the common prefix they share, make it the new common parent.
       long[] commonPrefix = subFirstNBits(node.bitArray, matchResult);
       leftShift(remainingBitArray, matchResult);
       leftShift(node.bitArray, matchResult);
       boolean newEdgeOldBranch = (node.bitArray[0] & (0x1L << 63)) != 0x0L;
       leftShift(node.bitArray, 1);
       node.bitArray = trimTail(node.bitArray,node.skipNum - matchResult);
+
+      // at the diverge point, first attach the old branch to the newly created parent node
       if (!newEdgeOldBranch) {
         node.left = new TrieNode(node.bitArray,node.skipNum - matchResult-1,node.left,node.right);
         node.left.isWord = node.isWord;
@@ -108,6 +129,7 @@ public class PatriciaTrie implements ITrie {
         node.right.isWord = node.isWord;
       }
 
+      // next add the new word as a leaf node.
       boolean newEdgeWord = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
       leftShift(remainingBitArray, 1);
       if (!newEdgeWord) {
@@ -121,6 +143,8 @@ public class PatriciaTrie implements ITrie {
 
       node.bitArray = commonPrefix;
       node.skipNum = matchResult;
+
+      // the diverging point is not a word.
       node.isWord = false;
       return;
     }
@@ -146,6 +170,7 @@ public class PatriciaTrie implements ITrie {
     return longArray;
   }
 
+  // left shift the entire bit array.
   public static void leftShift(long[] array, int shiftAmount) {
     if (shiftAmount < 0 || array == null || array.length == 0) {
       return; // Invalid shift amount or empty array
@@ -174,6 +199,7 @@ public class PatriciaTrie implements ITrie {
     }
   }
 
+  // get the first N bits of the entire bit array.
   public static long[] subFirstNBits(long[] bitArray, int n) {
     if (n <= 0 || bitArray == null || bitArray.length == 0) {
       return new long[0]; // Return an empty array if n is non-positive or bitArray is null/empty
@@ -202,6 +228,8 @@ public class PatriciaTrie implements ITrie {
     return result;
   }
 
+  // match bit array A and B, if one of these is a prefix of the other, return -1;
+  // otherwise, return the maximum common prefix length.
   private static int match(TrieNode node, long[] remainingBitArray, int remainingBits)
   {
     int matchingBits= Math.min(node.skipNum,remainingBits);
@@ -242,6 +270,7 @@ public class PatriciaTrie implements ITrie {
     throw new IllegalStateException("Should've found diverging point of two mismatching bitarrays");
   }
 
+  // create a new trimmed bit array, to release memory usage.
   private static long[] trimTail(long[] bitArray,int remainingBits){
     int newSize = (remainingBits - 1) / Long.SIZE +1;
     if (newSize == bitArray.length)
@@ -260,16 +289,22 @@ public class PatriciaTrie implements ITrie {
     int remainingBits = word.length() * Byte.SIZE;
     TrieNode node = root;
     while (true) {
+      // if the current node was not created, but the word isn't consumed.
+      // the word is not in the trie.
       if (node == null)
         return false;
+
+      // if the prefix is longer than the current word.
       if (remainingBits < node.skipNum){
         return false;
       }
       if (remainingBits > node.skipNum) {
         int matchResult = match(node, remainingBitArray,remainingBits);
+        // if the prefix is shorter, but it doesn't match the prefix.
         if (matchResult != -1) {
           return false;
         }
+        // otherwise, visit next node.
         leftShift(remainingBitArray, node.skipNum);
         remainingBits -= node.skipNum;
         boolean newEdge = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
@@ -282,12 +317,15 @@ public class PatriciaTrie implements ITrie {
         remainingBits--;
       }
       else {
+        // if the prefix is exactly the length of the word remaining,
+        // check if they match and if it's marked a word node.
         int matchResult = match(node, remainingBitArray,remainingBits);
         return (matchResult == -1) && node.isWord;
       }
     }
   }
 
+  // Basically the same logic as searching
   @Override
   public boolean startsWith(String prefix) {
     long[] remainingBitArray = compress(prefix.getBytes());
@@ -329,6 +367,7 @@ public class PatriciaTrie implements ITrie {
     return remove(root, remainingBitArray, remainingBits);
   }
 
+  // find the leaf node and recursively delete empty nodes from bottom to the top.
   private boolean remove(TrieNode node, long[] remainingBitArray,int remainingBits) {
     if (node == null)
       return false;
