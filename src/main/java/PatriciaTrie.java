@@ -1,6 +1,5 @@
 public class PatriciaTrie implements ITrie {
   private static class TrieNode {
-    String word;
     public long[] bitArray;
 
     TrieNode left = null;
@@ -10,7 +9,6 @@ public class PatriciaTrie implements ITrie {
     boolean isWord;
 
     TrieNode() {
-      this.word = null;
       skipNum = 0;
     }
     TrieNode(long[] bitArray, int skipNum) {
@@ -257,6 +255,8 @@ public class PatriciaTrie implements ITrie {
     int remainingBits = word.length() * Byte.SIZE;
     TrieNode node = root;
     while (true) {
+      if (node == null)
+        return false;
       if (remainingBits < node.skipNum){
         return false;
       }
@@ -280,8 +280,6 @@ public class PatriciaTrie implements ITrie {
         int matchResult = match(node, remainingBitArray,remainingBits);
         return (matchResult == -1);
       }
-
-
     }
   }
 
@@ -292,11 +290,48 @@ public class PatriciaTrie implements ITrie {
 
   @Override
   public boolean remove(String word) {
-    return remove(root, word);
+    long[] remainingBitArray = compress(word.getBytes());
+    int remainingBits = word.length() * Byte.SIZE;
+    return remove(root, remainingBitArray, remainingBits);
   }
 
-  private boolean remove(TrieNode node, String word) {
-    return false;
+  private boolean remove(TrieNode node, long[] remainingBitArray,int remainingBits) {
+    if (node == null)
+      return false;
+    if (remainingBits < node.skipNum){
+      return false;
+    }
+    if (remainingBits > node.skipNum) {
+      int matchResult = match(node, remainingBitArray,remainingBits);
+      if (matchResult != -1) {
+        return false;
+      }
+      leftShift(remainingBitArray, node.skipNum);
+      remainingBits -= node.skipNum;
+      boolean newEdge = (remainingBitArray[0] & (0x1L << 63)) != 0x0L;
+      TrieNode nextNode;
+      if (!newEdge)
+        nextNode = node.left;
+      else
+        nextNode = node.right;
+      leftShift(remainingBitArray, 1);
+      remainingBits--;
+      boolean res = remove(nextNode,remainingBitArray,remainingBits);
+      // remove empty nodes
+      if (!nextNode.isWord && nextNode.left == null && nextNode.right == null) {
+        if (!newEdge){
+          node.left = null;
+        } else {
+          node.right = null;
+        }
+      }
+      return res;
+    }
+    else {
+      int matchResult = match(node, remainingBitArray,remainingBits);
+      node.isWord = false;
+      return (matchResult == -1);
+    }
   }
 
   @Override

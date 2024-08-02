@@ -133,6 +133,7 @@ public class TriePerformanceAnalyser extends ApplicationFrame {
         trie.search(word);
       }
       data.avg_searching_time = (float)monitor.getRunningTime()/n;
+      monitor.reset();
       for (String word : wordsDelete) {
         trie.remove(word);
       }
